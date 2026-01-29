@@ -1,40 +1,56 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class BidListController : ControllerBase
     {
-        [HttpGet]
-        [Route("validate")]
-        public IActionResult Validate([FromBody] BidList bidList)
-        {
-            // TODO: check data valid and save to db, after saving return bid list
-            return Ok();
-        }
+        private readonly BidListRepository _repo;
+
+        public BidListController(BidListRepository repo) => _repo = repo;
 
         [HttpGet]
-        [Route("update/{id}")]
-        public IActionResult ShowUpdateForm(int id)
+        public async Task<IActionResult> GetAll()
+            => Ok(await _repo.FindAll());
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            return Ok();
+            var item = await _repo.FindById(id);
+            return item == null ? NotFound() : Ok(item);
         }
 
         [HttpPost]
-        [Route("update/{id}")]
-        public IActionResult UpdateBid(int id, [FromBody] BidList bidList)
+        public async Task<IActionResult> Create([FromBody] BidList bidList)
         {
-            // TODO: check required fields, if valid call service to update Bid and return list Bid
-            return Ok();
+            if (bidList == null) return BadRequest();
+            bidList.BidListId = 0;
+
+            await _repo.Add(bidList);
+            return CreatedAtAction(nameof(GetById), new { id = bidList.BidListId }, bidList);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public IActionResult DeleteBid(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] BidList bidList)
         {
-            return Ok();
+            if (bidList == null) return BadRequest();
+            if (bidList.BidListId != 0 && bidList.BidListId != id) return BadRequest("Id mismatch");
+
+            var ok = await _repo.Update(id, bidList);
+            return ok ? NoContent() : NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var existing = await _repo.FindById(id);
+            if (existing == null) return NotFound();
+
+            await _repo.Delete(existing);
+            return NoContent();
         }
     }
 }

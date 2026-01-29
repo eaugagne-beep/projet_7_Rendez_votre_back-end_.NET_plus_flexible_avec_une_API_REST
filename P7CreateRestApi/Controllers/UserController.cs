@@ -5,81 +5,52 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dot.Net.WebApi.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private UserRepository _userRepository;
+        private readonly UserRepository _repo;
 
-        public UserController(UserRepository userRepository)
-        {
-            _userRepository = userRepository;
-        }
+        public UserController(UserRepository repo) => _repo = repo;
 
         [HttpGet]
-        [Route("list")]
-        public IActionResult Home()
+        public async Task<IActionResult> GetAll()
+            => Ok(await _repo.FindAll());
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("add")]
-        public IActionResult AddUser([FromBody]User user)
-        {
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("validate")]
-        public IActionResult Validate([FromBody]User user)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-           
-           _userRepository.Add(user);
-
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("update/{id}")]
-        public IActionResult ShowUpdateForm(int id)
-        {
-            User user = _userRepository.FindById(id);
-            
-            if (user == null)
-                throw new ArgumentException("Invalid user Id:" + id);
-
-            return Ok();
+            var item = await _repo.FindById(id);
+            return item == null ? NotFound() : Ok(item);
         }
 
         [HttpPost]
-        [Route("update/{id}")]
-        public IActionResult UpdateUser(int id, [FromBody] User user)
+        public async Task<IActionResult> Create([FromBody] User user)
         {
-            // TODO: check required fields, if valid call service to update Trade and return Trade list
-            return Ok();
+            if (user == null) return BadRequest();
+            user.Id = 0;
+
+            await _repo.Add(user);
+            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public IActionResult DeleteUser(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] User user)
         {
-            User user = _userRepository.FindById(id);
-            
-            if (user == null)
-                throw new ArgumentException("Invalid user Id:" + id);
+            if (user == null) return BadRequest();
+            if (user.Id != 0 && user.Id != id) return BadRequest("Id mismatch");
 
-            return Ok();
+            var ok = await _repo.Update(id, user);
+            return ok ? NoContent() : NotFound();
         }
 
-        [HttpGet]
-        [Route("/secure/article-details")]
-        public async Task<ActionResult<List<User>>> GetAllUserArticles()
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            return Ok();
+            var existing = await _repo.FindById(id);
+            if (existing == null) return NotFound();
+
+            await _repo.Delete(existing);
+            return NoContent();
         }
     }
 }

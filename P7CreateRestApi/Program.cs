@@ -1,8 +1,10 @@
+using System.IO;
 using Dot.Net.WebApi.Data;
+using Dot.Net.WebApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-ConfigurationManager configuration = builder.Configuration;
+
 
 // Add services to the container.
 
@@ -11,8 +13,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
 builder.Services.AddDbContext<LocalDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+
+builder.Services.AddScoped<BidListRepository>();
+builder.Services.AddScoped<CurvePointRepository>();
+builder.Services.AddScoped<RatingRepository>();
+builder.Services.AddScoped<RuleNameRepository>();
+builder.Services.AddScoped<TradeRepository>();
+builder.Services.AddScoped<UserRepository>();
 
 var app = builder.Build();
 

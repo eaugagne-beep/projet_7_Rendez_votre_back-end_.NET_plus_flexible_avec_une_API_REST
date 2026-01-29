@@ -1,59 +1,56 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class TradeController : ControllerBase
     {
-        // TODO: Inject Trade service
+        private readonly TradeRepository _repo;
+
+        public TradeController(TradeRepository repo) => _repo = repo;
 
         [HttpGet]
-        [Route("list")]
-        public IActionResult Home()
-        {
-            // TODO: find all Trade, add to model
-            return Ok();
-        }
+        public async Task<IActionResult> GetAll()
+            => Ok(await _repo.FindAll());
 
-        [HttpGet]
-        [Route("add")]
-        public IActionResult AddTrade([FromBody]Trade trade)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("validate")]
-        public IActionResult Validate([FromBody]Trade trade)
-        {
-            // TODO: check data valid and save to db, after saving return Trade list
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("update/{id}")]
-        public IActionResult ShowUpdateForm(int id)
-        {
-            // TODO: get Trade by Id and to model then show to the form
-            return Ok();
+            var item = await _repo.FindById(id);
+            return item == null ? NotFound() : Ok(item);
         }
 
         [HttpPost]
-        [Route("update/{id}")]
-        public IActionResult UpdateTrade(int id, [FromBody] Trade trade)
+        public async Task<IActionResult> Create([FromBody] Trade trade)
         {
-            // TODO: check required fields, if valid call service to update Trade and return Trade list
-            return Ok();
+            if (trade == null) return BadRequest();
+            trade.TradeId = 0;
+
+            await _repo.Add(trade);
+            return CreatedAtAction(nameof(GetById), new { id = trade.TradeId }, trade);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public IActionResult DeleteTrade(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Trade trade)
         {
-            // TODO: Find Trade by Id and delete the Trade, return to Trade list
-            return Ok();
+            if (trade == null) return BadRequest();
+            if (trade.TradeId != 0 && trade.TradeId != id) return BadRequest("Id mismatch");
+
+            var ok = await _repo.Update(id, trade);
+            return ok ? NoContent() : NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var existing = await _repo.FindById(id);
+            if (existing == null) return NotFound();
+
+            await _repo.Delete(existing);
+            return NoContent();
         }
     }
 }

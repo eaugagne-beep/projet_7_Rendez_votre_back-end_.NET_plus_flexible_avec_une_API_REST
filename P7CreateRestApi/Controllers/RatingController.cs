@@ -1,59 +1,56 @@
-using Dot.Net.WebApi.Controllers.Domain;
+using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class RatingController : ControllerBase
     {
-        // TODO: Inject Rating service
+        private readonly RatingRepository _repo;
+
+        public RatingController(RatingRepository repo) => _repo = repo;
 
         [HttpGet]
-        [Route("list")]
-        public IActionResult Home()
-        {
-            // TODO: find all Rating, add to model
-            return Ok();
-        }
+        public async Task<IActionResult> GetAll()
+            => Ok(await _repo.FindAll());
 
-        [HttpGet]
-        [Route("add")]
-        public IActionResult AddRatingForm([FromBody]Rating rating)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("validate")]
-        public IActionResult Validate([FromBody]Rating rating)
-        {
-            // TODO: check data valid and save to db, after saving return Rating list
-            return Ok();
-        }
-
-        [HttpGet]
-        [Route("update/{id}")]
-        public IActionResult ShowUpdateForm(int id)
-        {
-            // TODO: get Rating by Id and to model then show to the form
-            return Ok();
+            var item = await _repo.FindById(id);
+            return item == null ? NotFound() : Ok(item);
         }
 
         [HttpPost]
-        [Route("update/{id}")]
-        public IActionResult UpdateRating(int id, [FromBody] Rating rating)
+        public async Task<IActionResult> Create([FromBody] Rating rating)
         {
-            // TODO: check required fields, if valid call service to update Rating and return Rating list
-            return Ok();
+            if (rating == null) return BadRequest();
+            rating.Id = 0;
+
+            await _repo.Add(rating);
+            return CreatedAtAction(nameof(GetById), new { id = rating.Id }, rating);
         }
 
-        [HttpDelete]
-        [Route("{id}")]
-        public IActionResult DeleteRating(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Rating rating)
         {
-            // TODO: Find Rating by Id and delete the Rating, return to Rating list
-            return Ok();
+            if (rating == null) return BadRequest();
+            if (rating.Id != 0 && rating.Id != id) return BadRequest("Id mismatch");
+
+            var ok = await _repo.Update(id, rating);
+            return ok ? NoContent() : NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var existing = await _repo.FindById(id);
+            if (existing == null) return NotFound();
+
+            await _repo.Delete(existing);
+            return NoContent();
         }
     }
 }
