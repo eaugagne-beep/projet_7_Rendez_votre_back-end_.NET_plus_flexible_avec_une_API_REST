@@ -1,56 +1,76 @@
 using Dot.Net.WebApi.Domain;
-using Dot.Net.WebApi.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Dot.Net.WebApi.Dtos;
 
-namespace Dot.Net.WebApi.Controllers
+
+[ApiController]
+[Route("api/users")]
+public class UserController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UserController : ControllerBase
+    private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
+
+    public UserController(
+        UserManager<User> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
-        private readonly UserRepository _repo;
+        _userManager = userManager;
+        _roleManager = roleManager;
+    }
 
-        public UserController(UserRepository repo) => _repo = repo;
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-            => Ok(await _repo.FindAll());
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+    // CREATE
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateUserDto dto)
+    {
+        var user = new User
         {
-            var item = await _repo.FindById(id);
-            return item == null ? NotFound() : Ok(item);
-        }
+            UserName = dto.UserName,
+            FullName = dto.FullName
+        };
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] User user)
-        {
-            if (user == null) return BadRequest();
-            user.Id = 0;
+        var result = await _userManager.CreateAsync(user, dto.Password);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
 
-            await _repo.Add(user);
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
-        }
+        if (!await _roleManager.RoleExistsAsync(dto.Role))
+            await _roleManager.CreateAsync(new IdentityRole(dto.Role));
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] User user)
-        {
-            if (user == null) return BadRequest();
-            if (user.Id != 0 && user.Id != id) return BadRequest("Id mismatch");
+        await _userManager.AddToRoleAsync(user, dto.Role);
 
-            var ok = await _repo.Update(id, user);
-            return ok ? NoContent() : NotFound();
-        }
+        return Ok(user);
+    }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var existing = await _repo.FindById(id);
-            if (existing == null) return NotFound();
+    // READ
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        return user == null ? NotFound() : Ok(user);
+    }
 
-            await _repo.Delete(existing);
-            return NoContent();
-        }
+    // UPDATE
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(string id, UpdateUserDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        user.UserName = dto.UserName;
+        user.FullName = dto.FullName;
+
+        var result = await _userManager.UpdateAsync(user);
+        return result.Succeeded ? Ok(user) : BadRequest(result.Errors);
+    }
+
+    // DELETE
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        await _userManager.DeleteAsync(user);
+        return NoContent();
     }
 }

@@ -1,4 +1,3 @@
-using System.IO;
 using Dot.Net.WebApi.Data;
 using Dot.Net.WebApi.Repositories;
 using Microsoft.EntityFrameworkCore;
