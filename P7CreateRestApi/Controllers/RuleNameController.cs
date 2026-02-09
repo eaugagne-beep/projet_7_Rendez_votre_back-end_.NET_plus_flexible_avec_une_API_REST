@@ -1,9 +1,11 @@
 using Dot.Net.WebApi.Domain;
 using Dot.Net.WebApi.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class RuleNameController : ControllerBase

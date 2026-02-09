@@ -19,7 +19,7 @@ public class UserController : ControllerBase
         _roleManager = roleManager;
     }
 
-    // CREATE
+    
     [HttpPost]
     public async Task<IActionResult> Create(CreateUserDto dto)
     {
@@ -41,7 +41,7 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
-    // READ
+    
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(string id)
     {
@@ -49,7 +49,7 @@ public class UserController : ControllerBase
         return user == null ? NotFound() : Ok(user);
     }
 
-    // UPDATE
+    
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, UpdateUserDto dto)
     {
@@ -63,7 +63,7 @@ public class UserController : ControllerBase
         return result.Succeeded ? Ok(user) : BadRequest(result.Errors);
     }
 
-    // DELETE
+    
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {

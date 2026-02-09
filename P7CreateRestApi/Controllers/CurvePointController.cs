@@ -1,9 +1,11 @@
 ﻿using Dot.Net.WebApi.Domain;
 using Dot.Net.WebApi.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class CurveController : ControllerBase
@@ -15,7 +17,7 @@ namespace Dot.Net.WebApi.Controllers
             _repo = repo;
         }
 
-        // GET: api/Curve
+        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -23,7 +25,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(items);
         }
 
-        // GET: api/Curve/5
+        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -32,39 +34,39 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(item);
         }
 
-        // POST: api/Curve
+        
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CurvePoint curvePoint)
         {
             if (curvePoint == null) return BadRequest();
 
-            // ignore l'Id du body (DB le génère)
+            
             curvePoint.Id = 0;
 
             await _repo.Add(curvePoint);
 
-            // renvoie 201 + route vers GET by id
+            
             return CreatedAtAction(nameof(GetById), new { id = curvePoint.Id }, curvePoint);
         }
 
-        // PUT: api/Curve/5
+        
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CurvePoint curvePoint)
         {
             if (curvePoint == null) return BadRequest();
 
-            // Si Id est fourni dans le body, il doit matcher l'URL
+            
             if (curvePoint.Id != 0 && curvePoint.Id != id)
                 return BadRequest("Id mismatch");
 
-            // ✅ appel correct : 2 paramètres (id + input)
+            
             var ok = await _repo.Update(id, curvePoint);
             if (!ok) return NotFound();
 
-            return NoContent(); // 204
+            return NoContent(); 
         }
 
-        // DELETE: api/Curve/5
+        
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -72,7 +74,7 @@ namespace Dot.Net.WebApi.Controllers
             if (existing == null) return NotFound();
 
             await _repo.Delete(existing);
-            return NoContent(); // 204
+            return NoContent(); 
         }
     }
 }

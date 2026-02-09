@@ -1,9 +1,11 @@
 using Dot.Net.WebApi.Domain;
 using Dot.Net.WebApi.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BidListController : ControllerBase
@@ -12,6 +14,16 @@ namespace Dot.Net.WebApi.Controllers
 
         public BidListController(BidListRepository repo) => _repo = repo;
 
+        [HttpGet("debug-route")]
+        [AllowAnonymous]
+        public IActionResult DebugRoute() => Ok("route ok");
+
+
+        [AllowAnonymous]
+        [HttpGet("ping")]
+        public IActionResult Ping() => Ok("pong");
+        
+       
         [HttpGet]
         public async Task<IActionResult> GetAll()
             => Ok(await _repo.FindAll());

@@ -1,9 +1,11 @@
 using Dot.Net.WebApi.Domain;
 using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Dot.Net.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class TradeController : ControllerBase
