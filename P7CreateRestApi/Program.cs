@@ -103,6 +103,41 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("HTTP");
+
+    var user = context.User?.Identity?.IsAuthenticated == true
+        ? context.User.Identity!.Name
+        : "anonymous";
+
+    logger.LogInformation(" {Method} {Path} | user={User}",
+        context.Request.Method,
+        context.Request.Path,
+        user);
+
+    try
+    {
+        await next();
+
+        logger.LogInformation(" {Method} {Path} | status={StatusCode} | user={User}",
+            context.Request.Method,
+            context.Request.Path,
+            context.Response.StatusCode,
+            user);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, " {Method} {Path} | user={User}",
+            context.Request.Method,
+            context.Request.Path,
+            user);
+        throw;
+    }
+});
+
+
 
 app.UseRouting();
 app.UseAuthentication();
