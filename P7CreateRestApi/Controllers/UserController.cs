@@ -1,131 +1,116 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Dot.Net.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(UserManager<User> userManager, ILogger<UserController> logger)
+        public UserController(
+            UserManager<User> userManager,
+            RoleManager<IdentityRole> roleManager,
+            ILogger<UserController> logger)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _logger = logger;
         }
 
+        // ADMIN endpoints
         
-        private (string UserName, string? UserId, string Roles) GetCaller()
-        {
-            var userName = User?.Identity?.Name ?? "anonymous";
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var roles = string.Join(",", User.FindAll(ClaimTypes.Role).Select(r => r.Value));
-            if (string.IsNullOrWhiteSpace(roles)) roles = "none";
-            return (userName, userId, roles);
-        }
-
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult GetAll()
         {
-            var (callerName, callerId, callerRoles) = GetCaller();
-            _logger.LogInformation("GET /api/User by {UserName} ({UserId}) roles={Roles}",
-                callerName, callerId, callerRoles);
+            _logger.LogInformation("GET /api/User called by Admin={User}", User.Identity?.Name ?? "unknown");
 
-            
             var users = _userManager.Users
                 .Select(u => new { u.Id, u.UserName, u.FullName })
                 .ToList();
 
-            _logger.LogInformation("GET /api/User -> returned {Count} users", users.Count);
             return Ok(users);
         }
 
-        
         [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
-            var (callerName, callerId, callerRoles) = GetCaller();
-            _logger.LogInformation("GET /api/User/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, callerName, callerId, callerRoles);
+            _logger.LogInformation("GET /api/User/{Id} called by Admin={User}", id, User.Identity?.Name ?? "unknown");
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                _logger.LogWarning("GET /api/User/{Id} -> NotFound", id);
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            return Ok(new { user.Id, user.UserName, user.FullName });
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(new
+            {
+                user.Id,
+                user.UserName,
+                user.FullName,
+                Roles = roles
+            });
         }
 
-        public record UpdateUserDto(string? UserName, string? FullName);
+        
 
-       
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateUserDto dto)
         {
-            var (callerName, callerId, callerRoles) = GetCaller();
-            _logger.LogInformation("PUT /api/User/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, callerName, callerId, callerRoles);
+            _logger.LogInformation("PUT /api/User/{Id} called by Admin={User}", id, User.Identity?.Name ?? "unknown");
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                _logger.LogWarning("PUT /api/User/{Id} -> NotFound", id);
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            if (!string.IsNullOrWhiteSpace(dto.UserName))
-                user.UserName = dto.UserName;
-
-            if (!string.IsNullOrWhiteSpace(dto.FullName))
+            if (dto.FullName != null)
                 user.FullName = dto.FullName;
 
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
+            var updateRes = await _userManager.UpdateAsync(user);
+            if (!updateRes.Succeeded) return BadRequest(updateRes.Errors);
+
+            // update role (si fourni)
+            if (!string.IsNullOrWhiteSpace(dto.Role))
             {
-                _logger.LogWarning("PUT /api/User/{Id} -> BadRequest (Identity errors)", id);
-                return BadRequest(result.Errors);
+                if (!await _roleManager.RoleExistsAsync(dto.Role))
+                    await _roleManager.CreateAsync(new IdentityRole(dto.Role));
+
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Any())
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+                await _userManager.AddToRoleAsync(user, dto.Role);
             }
 
-            _logger.LogInformation("PUT /api/User/{Id} -> Updated", id);
+            _logger.LogInformation("User updated: Id={Id}", id);
             return NoContent();
         }
 
-        
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            var (callerName, callerId, callerRoles) = GetCaller();
-            _logger.LogWarning("DELETE /api/User/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, callerName, callerId, callerRoles);
+            _logger.LogInformation("DELETE /api/User/{Id} called by Admin={User}", id, User.Identity?.Name ?? "unknown");
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                _logger.LogWarning("DELETE /api/User/{Id} -> NotFound", id);
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            var result = await _userManager.DeleteAsync(user);
-            if (!result.Succeeded)
-            {
-                _logger.LogWarning("DELETE /api/User/{Id} -> BadRequest (Identity errors)", id);
-                return BadRequest(result.Errors);
-            }
+            var res = await _userManager.DeleteAsync(user);
+            if (!res.Succeeded) return BadRequest(res.Errors);
 
-            _logger.LogInformation("DELETE /api/User/{Id} -> Deleted", id);
+            _logger.LogInformation("User deleted: Id={Id}", id);
             return NoContent();
         }
+
+      
     }
 }

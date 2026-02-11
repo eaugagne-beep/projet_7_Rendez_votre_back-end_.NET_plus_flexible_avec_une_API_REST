@@ -1,8 +1,8 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Dtos;
 using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Dot.Net.WebApi.Controllers
 {
@@ -20,102 +20,95 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
-        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var user = User.Identity?.Name;
+            _logger.LogInformation("GET /api/Rating called by {User}",
+                User.Identity?.Name ?? "anonymous");
 
-            _logger.LogInformation(
-                "User {User} requested GET /api/Rating",
-                user
-            );
+            var items = await _repo.FindAll();
 
-            return Ok(await _repo.FindAll());
+            _logger.LogInformation("GET /api/Rating returned {Count} items", items.Count);
+            return Ok(items);
         }
 
-        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var user = User.Identity?.Name;
+            _logger.LogInformation("GET /api/Rating/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
-            _logger.LogInformation(
-                "User {User} requested GET /api/Rating/{Id}",
-                user,
-                id
-            );
-
-            var rating = await _repo.FindById(id);
-            if (rating == null)
+            var item = await _repo.FindById(id);
+            if (item == null)
             {
-                _logger.LogWarning(
-                    "User {User} requested non-existing Rating {Id}",
-                    user,
-                    id
-                );
+                _logger.LogWarning("Rating not found: Id={Id}", id);
                 return NotFound();
             }
 
-            return Ok(rating);
+            return Ok(item);
         }
 
-        
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Rating rating)
+        public async Task<IActionResult> Create([FromBody] CreateRatingDto dto)
         {
-            var user = User.Identity?.Name;
+            _logger.LogInformation("POST /api/Rating called by {User}",
+                User.Identity?.Name ?? "anonymous");
 
-            if (rating == null) return BadRequest();
+            var entity = new Rating
+            {
+                MoodysRating = dto.MoodysRating,
+                SandPRating = dto.SandPRating,
+                FitchRating = dto.FitchRating,
+                OrderNumber = dto.OrderNumber
+            };
 
-            _logger.LogInformation(
-                "User {User} is creating a Rating",
-                user
-            );
+            await _repo.Add(entity);
 
-            rating.Id = 0;
-            await _repo.Add(rating);
-
-            return CreatedAtAction(nameof(GetById), new { id = rating.Id }, rating);
+            _logger.LogInformation("Rating created: Id={Id}", entity.Id);
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Rating rating)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateRatingDto dto)
         {
-            var user = User.Identity?.Name;
+            _logger.LogInformation("PUT /api/Rating/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
-            if (rating == null) return BadRequest();
-            if (rating.Id != 0 && rating.Id != id) return BadRequest("Id mismatch");
+            // Si ton repository a Update(id, Rating input) (comme CurvePoint), on l’utilise.
+            var ok = await _repo.Update(id, new Rating
+            {
+                MoodysRating = dto.MoodysRating,
+                SandPRating = dto.SandPRating,
+                FitchRating = dto.FitchRating,
+                OrderNumber = dto.OrderNumber
+            });
 
-            _logger.LogInformation(
-                "User {User} is updating Rating {Id}",
-                user,
-                id
-            );
+            if (!ok)
+            {
+                _logger.LogWarning("Rating not found for update: Id={Id}", id);
+                return NotFound();
+            }
 
-            var ok = await _repo.Update(id, rating);
-            if (!ok) return NotFound();
-
+            _logger.LogInformation("Rating updated: Id={Id}", id);
             return NoContent();
         }
 
-        
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var user = User.Identity?.Name;
-
-            _logger.LogWarning(
-                "User {User} is deleting Rating {Id}",
-                user,
-                id
-            );
+            _logger.LogInformation("DELETE /api/Rating/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var existing = await _repo.FindById(id);
-            if (existing == null) return NotFound();
+            if (existing == null)
+            {
+                _logger.LogWarning("Rating not found for delete: Id={Id}", id);
+                return NotFound();
+            }
 
             await _repo.Delete(existing);
+
+            _logger.LogInformation("Rating deleted: Id={Id}", id);
             return NoContent();
         }
     }

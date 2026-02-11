@@ -1,3 +1,4 @@
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Dot.Net.WebApi.Domain
@@ -7,27 +8,69 @@ namespace Dot.Net.WebApi.Domain
         [Key]
         public int BidListId { get; set; }
 
-        public string Account { get; set; }
-        public string BidType { get; set; }
-        public double? BidQuantity { get; set; }
-        public double? AskQuantity { get; set; }
-        public double? Bid { get; set; }
-        public double? Ask { get; set; }
-        public string Benchmark { get; set; }
-        public DateTime? BidListDate { get; set; }
-        public string Commentary { get; set; }
-        public string BidSecurity { get; set; }
-        public string BidStatus { get; set; }
-        public string Trader { get; set; }
-        public string Book { get; set; }
-        public string CreationName { get; set; }
-        public DateTime? CreationDate { get; set; }
-        public string RevisionName { get; set; }
-        public DateTime? RevisionDate { get; set; }
-        public string DealName { get; set; }
-        public string DealType { get; set; }
-        public string SourceListId { get; set; }
-        public string Side { get; set; }
-    }
+       
+        [Required]
+        [StringLength(128)]
+        public string Account { get; set; } = string.Empty;
 
+        [Required]
+        [StringLength(128)]
+        public string BidType { get; set; } = string.Empty;
+
+        
+        [Range(0, double.MaxValue)]
+        public double? BidQuantity { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public double? AskQuantity { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public double? Bid { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public double? Ask { get; set; }
+
+        
+        [StringLength(128)]
+        public string? Benchmark { get; set; }
+
+        public DateTime? BidListDate { get; set; }
+
+        [StringLength(512)]
+        public string? Commentary { get; set; }
+
+        [StringLength(128)]
+        public string? BidSecurity { get; set; }
+
+        [StringLength(64)]
+        public string? BidStatus { get; set; }
+
+        [StringLength(128)]
+        public string? Trader { get; set; }
+
+        [StringLength(128)]
+        public string? Book { get; set; }
+
+        [StringLength(128)]
+        public string? CreationName { get; set; }
+
+        public DateTime? CreationDate { get; set; }
+
+        [StringLength(128)]
+        public string? RevisionName { get; set; }
+
+        public DateTime? RevisionDate { get; set; }
+
+        [StringLength(128)]
+        public string? DealName { get; set; }
+
+        [StringLength(128)]
+        public string? DealType { get; set; }
+
+        [StringLength(128)]
+        public string? SourceListId { get; set; }
+
+        [StringLength(32)]
+        public string? Side { get; set; }
+    }
 }

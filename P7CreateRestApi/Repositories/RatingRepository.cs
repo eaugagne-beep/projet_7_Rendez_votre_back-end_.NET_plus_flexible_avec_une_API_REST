@@ -34,7 +34,6 @@ namespace Dot.Net.WebApi.Repositories
             var existing = await DbContext.Ratings.FindAsync(id);
             if (existing == null) return false;
 
-            // ⚠️ adapte les noms de propriétés selon ta classe Rating
             existing.MoodysRating = input.MoodysRating;
             existing.SandPRating = input.SandPRating;
             existing.FitchRating = input.FitchRating;
@@ -43,6 +42,7 @@ namespace Dot.Net.WebApi.Repositories
             await DbContext.SaveChangesAsync();
             return true;
         }
+
 
         public async Task Delete(Rating rating)
         {

@@ -1,10 +1,22 @@
-﻿namespace Dot.Net.WebApi.Dtos
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Dot.Net.WebApi.Dtos
 {
     public class CreateUserDto
     {
-        public string UserName { get; set; }
-        public string Password { get; set; }
-        public string FullName { get; set; }
-        public string Role { get; set; }
+        [Required]
+        [StringLength(64)]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(128)]
+        public string Password { get; set; } = string.Empty;
+
+        [StringLength(128)]
+        public string? FullName { get; set; }
+
+        [Required]
+        [StringLength(64)]
+        public string Role { get; set; } = "User";
     }
 }

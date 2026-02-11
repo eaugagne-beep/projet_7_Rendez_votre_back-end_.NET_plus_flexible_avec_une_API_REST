@@ -1,29 +1,22 @@
+﻿using System.ComponentModel.DataAnnotations;
 
-using System.ComponentModel.DataAnnotations;
-
-namespace Dot.Net.WebApi.Domain
+namespace Dot.Net.WebApi.Dtos
 {
-    public class Trade
+    public class UpdateTradeDto
     {
-        [Key]
-        public int TradeId { get; set; }
-
         [Required]
         [StringLength(128)]
         public string Account { get; set; } = string.Empty;
 
-        [Required]
         [StringLength(128)]
-        public string AccountType { get; set; } = string.Empty;
+        public string? AccountType { get; set; }
 
-        
         [Range(0, double.MaxValue)]
         public double? BuyQuantity { get; set; }
 
         [Range(0, double.MaxValue)]
         public double? SellQuantity { get; set; }
 
-        
         [Range(0, double.MaxValue)]
         public double? BuyPrice { get; set; }
 
@@ -46,16 +39,6 @@ namespace Dot.Net.WebApi.Domain
 
         [StringLength(128)]
         public string? Book { get; set; }
-
-        [StringLength(128)]
-        public string? CreationName { get; set; }
-
-        public DateTime? CreationDate { get; set; }
-
-        [StringLength(128)]
-        public string? RevisionName { get; set; }
-
-        public DateTime? RevisionDate { get; set; }
 
         [StringLength(128)]
         public string? DealName { get; set; }

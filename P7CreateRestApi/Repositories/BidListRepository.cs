@@ -47,19 +47,19 @@ namespace Dot.Net.WebApi.Repositories
             existing.BidStatus = input.BidStatus;
             existing.Trader = input.Trader;
             existing.Book = input.Book;
-            existing.CreationName = input.CreationName;
-            existing.CreationDate = input.CreationDate;
-            existing.RevisionName = input.RevisionName;
-            existing.RevisionDate = input.RevisionDate;
             existing.DealName = input.DealName;
             existing.DealType = input.DealType;
             existing.SourceListId = input.SourceListId;
             existing.Side = input.Side;
 
+            // serveur
+            existing.RevisionDate = input.RevisionDate ?? DateTime.UtcNow;
+
             await DbContext.SaveChangesAsync();
             return true;
         }
-        
+
+
 
         public async Task Delete(BidList bidList)
         {

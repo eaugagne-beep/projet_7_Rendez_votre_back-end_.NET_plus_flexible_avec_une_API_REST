@@ -1,8 +1,8 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Dtos;
 using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Dot.Net.WebApi.Controllers
 {
@@ -20,123 +20,131 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
-        
-        private (string UserName, string? UserId, string Roles) GetCaller()
-        {
-            var userName = User?.Identity?.Name ?? "anonymous";
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var roles = string.Join(",", User.FindAll(ClaimTypes.Role).Select(r => r.Value));
-            if (string.IsNullOrWhiteSpace(roles)) roles = "none";
-            return (userName, userId, roles);
-        }
-
-       
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("GET /api/Trade by {UserName} ({UserId}) roles={Roles}",
-                userName, userId, roles);
+            _logger.LogInformation("GET /api/Trade called by {User}",
+                User.Identity?.Name ?? "anonymous");
 
             var items = await _repo.FindAll();
 
-            _logger.LogInformation("GET /api/Trade -> returned {Count} items", items.Count);
+            _logger.LogInformation("GET /api/Trade returned {Count} items", items.Count);
             return Ok(items);
         }
 
-        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("GET /api/Trade/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, userName, userId, roles);
+            _logger.LogInformation("GET /api/Trade/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var item = await _repo.FindById(id);
             if (item == null)
             {
-                _logger.LogWarning("GET /api/Trade/{Id} -> NotFound by {UserName} ({UserId})",
-                    id, userName, userId);
+                _logger.LogWarning("Trade not found: Id={Id}", id);
                 return NotFound();
             }
 
             return Ok(item);
         }
 
-       
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Trade trade)
+        public async Task<IActionResult> Create([FromBody] CreateTradeDto dto)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("POST /api/Trade (Create) by {UserName} ({UserId}) roles={Roles}",
-                userName, userId, roles);
+            _logger.LogInformation("POST /api/Trade by {User}", User.Identity?.Name ?? "anonymous");
 
-            if (trade == null) return BadRequest();
+            var username = User.Identity?.Name ?? "system";
+            var now = DateTime.UtcNow;
 
-            
-            trade.TradeId = 0;
+            var entity = new Trade
+            {
+                Account = dto.Account,
+                AccountType = dto.AccountType,
+                BuyQuantity = dto.BuyQuantity,
+                SellQuantity = dto.SellQuantity,
+                BuyPrice = dto.BuyPrice,
+                SellPrice = dto.SellPrice,
+                TradeDate = dto.TradeDate,
+                TradeSecurity = dto.TradeSecurity,
+                TradeStatus = dto.TradeStatus,
+                Trader = dto.Trader,
+                Benchmark = dto.Benchmark,
+                Book = dto.Book,
+                DealName = dto.DealName,
+                DealType = dto.DealType,
+                SourceListId = dto.SourceListId,
+                Side = dto.Side,
 
-            await _repo.Add(trade);
+                //  audit serveur
+                CreationName = username,
+                CreationDate = now,
+                RevisionName = username,
+                RevisionDate = now
+            };
 
-            _logger.LogInformation("POST /api/Trade -> Created id={Id} by {UserName} ({UserId})",
-                trade.TradeId, userName, userId);
+            await _repo.Add(entity);
 
-            return CreatedAtAction(nameof(GetById), new { id = trade.TradeId }, trade);
+            return CreatedAtAction(nameof(GetById), new { id = entity.TradeId }, entity);
         }
 
-        
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Trade trade)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateTradeDto dto)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("PUT /api/Trade/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, userName, userId, roles);
+            _logger.LogInformation("PUT /api/Trade/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
-            if (trade == null) return BadRequest();
-
-           
-            if (trade.TradeId != 0 && trade.TradeId != id)
+            var ok = await _repo.Update(id, new Trade
             {
-                _logger.LogWarning("PUT /api/Trade/{Id} -> BadRequest (Id mismatch body={BodyId}) by {UserName} ({UserId})",
-                    id, trade.TradeId, userName, userId);
-                return BadRequest("Id mismatch");
-            }
+                Account = dto.Account,
+                AccountType = dto.AccountType,
+                BuyQuantity = dto.BuyQuantity,
+                SellQuantity = dto.SellQuantity,
+                BuyPrice = dto.BuyPrice,
+                SellPrice = dto.SellPrice,
+                TradeDate = dto.TradeDate,
+                TradeSecurity = dto.TradeSecurity,
+                TradeStatus = dto.TradeStatus,
+                Trader = dto.Trader,
+                Benchmark = dto.Benchmark,
+                Book = dto.Book,
+                DealName = dto.DealName,
+                DealType = dto.DealType,
+                SourceListId = dto.SourceListId,
+                Side = dto.Side,
 
-            var ok = await _repo.Update(id, trade);
+                // serveur
+                RevisionName = User.Identity?.Name ?? "system",
+                RevisionDate = DateTime.UtcNow
+
+            });
+
             if (!ok)
             {
-                _logger.LogWarning("PUT /api/Trade/{Id} -> NotFound by {UserName} ({UserId})",
-                    id, userName, userId);
+                _logger.LogWarning("Trade not found for update: Id={Id}", id);
                 return NotFound();
             }
 
-            _logger.LogInformation("PUT /api/Trade/{Id} -> Updated by {UserName} ({UserId})",
-                id, userName, userId);
-
+            _logger.LogInformation("Trade updated: Id={Id}", id);
             return NoContent();
         }
 
-        
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogWarning("DELETE /api/Trade/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, userName, userId, roles);
+            _logger.LogInformation("DELETE /api/Trade/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var existing = await _repo.FindById(id);
             if (existing == null)
             {
-                _logger.LogWarning("DELETE /api/Trade/{Id} -> NotFound by {UserName} ({UserId})",
-                    id, userName, userId);
+                _logger.LogWarning("Trade not found for delete: Id={Id}", id);
                 return NotFound();
             }
 
             await _repo.Delete(existing);
 
-            _logger.LogInformation("DELETE /api/Trade/{Id} -> Deleted by {UserName} ({UserId})",
-                id, userName, userId);
-
+            _logger.LogInformation("Trade deleted: Id={Id}", id);
             return NoContent();
         }
     }

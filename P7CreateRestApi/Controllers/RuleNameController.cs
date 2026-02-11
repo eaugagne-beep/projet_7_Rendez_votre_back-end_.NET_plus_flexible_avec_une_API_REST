@@ -1,8 +1,8 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Dtos;
 using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Dot.Net.WebApi.Controllers
 {
@@ -20,125 +20,99 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
-        
-        private (string UserName, string? UserId, string Roles) GetCaller()
-        {
-            var userName = User?.Identity?.Name ?? "anonymous";
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var roles = string.Join(",", User.FindAll(ClaimTypes.Role).Select(r => r.Value));
-            if (string.IsNullOrWhiteSpace(roles)) roles = "none";
-            return (userName, userId, roles);
-        }
-
-        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("GET /api/RuleName by {UserName} ({UserId}) roles={Roles}",
-                userName, userId, roles);
+            _logger.LogInformation("GET /api/RuleName called by {User}",
+                User.Identity?.Name ?? "anonymous");
 
             var items = await _repo.FindAll();
 
-            _logger.LogInformation("GET /api/RuleName -> returned {Count} items", items.Count);
+            _logger.LogInformation("GET /api/RuleName returned {Count} items", items.Count);
             return Ok(items);
         }
 
-        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("GET /api/RuleName/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, userName, userId, roles);
+            _logger.LogInformation("GET /api/RuleName/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var item = await _repo.FindById(id);
             if (item == null)
             {
-                _logger.LogWarning("GET /api/RuleName/{Id} -> NotFound by {UserName} ({UserId})",
-                    id, userName, userId);
+                _logger.LogWarning("RuleName not found: Id={Id}", id);
                 return NotFound();
             }
 
             return Ok(item);
         }
 
-        
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] RuleName ruleName)
+        public async Task<IActionResult> Create([FromBody] CreateRuleNameDto dto)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("POST /api/RuleName (Create) by {UserName} ({UserId}) roles={Roles}",
-                userName, userId, roles);
+            _logger.LogInformation("POST /api/RuleName called by {User} | Name={Name}",
+                User.Identity?.Name ?? "anonymous", dto.Name);
 
-            if (ruleName == null) return BadRequest();
+            var entity = new RuleName
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Json = dto.Json,
+                Template = dto.Template,
+                SqlStr = dto.SqlStr,
+                SqlPart = dto.SqlPart
+            };
 
-            
-            ruleName.Id = 0;
+            await _repo.Add(entity);
 
-            await _repo.Add(ruleName);
-
-            _logger.LogInformation("POST /api/RuleName -> Created id={Id} by {UserName} ({UserId})",
-                ruleName.Id, userName, userId);
-
-            return CreatedAtAction(nameof(GetById), new { id = ruleName.Id }, ruleName);
+            _logger.LogInformation("RuleName created: Id={Id}", entity.Id);
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] RuleName ruleName)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateRuleNameDto dto)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogInformation("PUT /api/RuleName/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, userName, userId, roles);
+            _logger.LogInformation("PUT /api/RuleName/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
-            if (ruleName == null) return BadRequest();
-
-          
-            if (ruleName.Id != 0 && ruleName.Id != id)
+            var ok = await _repo.Update(id, new RuleName
             {
-                _logger.LogWarning("PUT /api/RuleName/{Id} -> BadRequest (Id mismatch body={BodyId}) by {UserName} ({UserId})",
-                    id, ruleName.Id, userName, userId);
-                return BadRequest("Id mismatch");
-            }
+                Name = dto.Name,
+                Description = dto.Description,
+                Json = dto.Json,
+                Template = dto.Template,
+                SqlStr = dto.SqlStr,
+                SqlPart = dto.SqlPart
+            });
 
-            var ok = await _repo.Update(id, ruleName);
             if (!ok)
             {
-                _logger.LogWarning("PUT /api/RuleName/{Id} -> NotFound by {UserName} ({UserId})",
-                    id, userName, userId);
+                _logger.LogWarning("RuleName not found for update: Id={Id}", id);
                 return NotFound();
             }
 
-            _logger.LogInformation("PUT /api/RuleName/{Id} -> Updated by {UserName} ({UserId})",
-                id, userName, userId);
-
+            _logger.LogInformation("RuleName updated: Id={Id}", id);
             return NoContent();
         }
 
-       
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var (userName, userId, roles) = GetCaller();
-            _logger.LogWarning("DELETE /api/RuleName/{Id} by {UserName} ({UserId}) roles={Roles}",
-                id, userName, userId, roles);
+            _logger.LogInformation("DELETE /api/RuleName/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var existing = await _repo.FindById(id);
             if (existing == null)
             {
-                _logger.LogWarning("DELETE /api/RuleName/{Id} -> NotFound by {UserName} ({UserId})",
-                    id, userName, userId);
+                _logger.LogWarning("RuleName not found for delete: Id={Id}", id);
                 return NotFound();
             }
 
             await _repo.Delete(existing);
 
-            _logger.LogInformation("DELETE /api/RuleName/{Id} -> Deleted by {UserName} ({UserId})",
-                id, userName, userId);
-
+            _logger.LogInformation("RuleName deleted: Id={Id}", id);
             return NoContent();
         }
     }
 }
-

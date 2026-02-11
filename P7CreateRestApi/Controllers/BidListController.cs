@@ -1,9 +1,8 @@
 using Dot.Net.WebApi.Domain;
+using Dot.Net.WebApi.Dtos;
 using Dot.Net.WebApi.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-
 
 namespace Dot.Net.WebApi.Controllers
 {
@@ -21,36 +20,28 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
-        private (string UserName, string? UserId) CurrentUser()
-        {
-            var userName = User?.Identity?.Name ?? "anonymous";
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return (userName, userId);
-        }
-
-  
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var (userName, userId) = CurrentUser();
-            _logger.LogInformation("GET BidList -> GetAll by {UserName} ({UserId})", userName, userId);
+            _logger.LogInformation("GET /api/BidList called by {User}",
+                User.Identity?.Name ?? "anonymous");
 
             var items = await _repo.FindAll();
 
-            _logger.LogInformation("GET BidList -> returned {Count} items", items.Count);
+            _logger.LogInformation("GET /api/BidList returned {Count} items", items.Count);
             return Ok(items);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var (userName, userId) = CurrentUser();
-            _logger.LogInformation("GET BidList/{Id} by {UserName} ({UserId})", id, userName, userId);
+            _logger.LogInformation("GET /api/BidList/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var item = await _repo.FindById(id);
             if (item == null)
             {
-                _logger.LogWarning("GET BidList/{Id} -> NotFound", id);
+                _logger.LogWarning("BidList not found: Id={Id}", id);
                 return NotFound();
             }
 
@@ -58,67 +49,115 @@ namespace Dot.Net.WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] BidList bidList)
+        public async Task<IActionResult> Create([FromBody] CreateBidListDto dto)
         {
-            var (userName, userId) = CurrentUser();
-            _logger.LogInformation("POST BidList (Create) by {UserName} ({UserId})", userName, userId);
+            // [ApiController] => 400 automatique si dto invalide (ModelState)
+            _logger.LogInformation("POST /api/BidList called by {User} | Account={Account} BidType={BidType}",
+                User.Identity?.Name ?? "anonymous",
+                dto.Account,
+                dto.BidType);
 
-            if (bidList == null) return BadRequest();
 
-            
-            bidList.BidListId = 0;
+            var username = User.Identity?.Name ?? "system";
 
-            await _repo.Add(bidList);
+            var now = DateTime.UtcNow;
 
-            _logger.LogInformation("POST BidList -> Created id={Id}", bidList.BidListId);
-            return CreatedAtAction(nameof(GetById), new { id = bidList.BidListId }, bidList);
+            var entity = new BidList
+            {
+                Account = dto.Account,
+                BidType = dto.BidType,
+                BidQuantity = dto.BidQuantity,
+                AskQuantity = dto.AskQuantity,
+                Bid = dto.Bid,
+                Ask = dto.Ask,
+                Benchmark = dto.Benchmark,
+                BidListDate = dto.BidListDate,
+                Commentary = dto.Commentary,
+                BidSecurity = dto.BidSecurity,
+                BidStatus = dto.BidStatus,
+                Trader = dto.Trader,
+                Book = dto.Book,
+                DealName = dto.DealName,
+                DealType = dto.DealType,
+                SourceListId = dto.SourceListId,
+                Side = dto.Side,
+
+                //  audit serveur (création)
+                CreationName = username,
+                CreationDate = now,
+
+                //  audit serveur (révision initiale = création)
+                RevisionName = username,
+                RevisionDate = now
+            };
+
+
+            await _repo.Add(entity);
+
+            _logger.LogInformation("BidList created: Id={Id}", entity.BidListId);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.BidListId }, entity);
         }
 
-
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] BidList bidList)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateBidListDto dto)
         {
-            var (userName, userId) = CurrentUser();
-            _logger.LogInformation("PUT BidList/{Id} by {UserName} ({UserId})", id, userName, userId);
+            _logger.LogInformation("PUT /api/BidList/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
-            if (bidList == null) return BadRequest();
-
-            
-            if (bidList.BidListId != 0 && bidList.BidListId != id)
+            var ok = await _repo.Update(id, new BidList
             {
-                _logger.LogWarning("PUT BidList/{Id} -> BadRequest (Id mismatch body={BodyId})", id, bidList.BidListId);
-                return BadRequest("Id mismatch");
-            }
+                Account = dto.Account,
+                BidType = dto.BidType,
+                BidQuantity = dto.BidQuantity,
+                AskQuantity = dto.AskQuantity,
+                Bid = dto.Bid,
+                Ask = dto.Ask,
+                Benchmark = dto.Benchmark,
+                BidListDate = dto.BidListDate,
+                Commentary = dto.Commentary,
+                BidSecurity = dto.BidSecurity,
+                BidStatus = dto.BidStatus,
+                Trader = dto.Trader,
+                Book = dto.Book,
+                DealName = dto.DealName,
+                DealType = dto.DealType,
+                SourceListId = dto.SourceListId,
+                Side = dto.Side,
 
-            var ok = await _repo.Update(id, bidList);
+                // serveur
+                RevisionName = User.Identity?.Name ?? "system",
+                RevisionDate = DateTime.UtcNow
+
+            });
+
             if (!ok)
             {
-                _logger.LogWarning("PUT BidList/{Id} -> NotFound", id);
+                _logger.LogWarning("BidList not found for update: Id={Id}", id);
                 return NotFound();
             }
 
-            _logger.LogInformation("PUT BidList/{Id} -> Updated", id);
+            _logger.LogInformation("BidList updated: Id={Id}", id);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var (userName, userId) = CurrentUser();
-            _logger.LogInformation("DELETE BidList/{Id} by {UserName} ({UserId})", id, userName, userId);
+            _logger.LogInformation("DELETE /api/BidList/{Id} called by {User}",
+                id, User.Identity?.Name ?? "anonymous");
 
             var existing = await _repo.FindById(id);
             if (existing == null)
             {
-                _logger.LogWarning("DELETE BidList/{Id} -> NotFound", id);
+                _logger.LogWarning("BidList not found for delete: Id={Id}", id);
                 return NotFound();
             }
 
             await _repo.Delete(existing);
 
-            _logger.LogInformation("DELETE BidList/{Id} -> Deleted", id);
+            _logger.LogInformation("BidList deleted: Id={Id}", id);
             return NoContent();
         }
-
     }
 }

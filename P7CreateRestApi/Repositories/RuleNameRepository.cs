@@ -45,6 +45,7 @@ namespace Dot.Net.WebApi.Repositories
             return true;
         }
 
+
         public async Task Delete(RuleName rule)
         {
             DbContext.RuleNames.Remove(rule);
