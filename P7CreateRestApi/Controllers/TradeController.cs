@@ -20,6 +20,7 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
+        // Seul un utilisateur authentifié peut voir la liste des Trades
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -31,7 +32,8 @@ namespace Dot.Net.WebApi.Controllers
             _logger.LogInformation("GET /api/Trade returned {Count} items", items.Count);
             return Ok(items);
         }
-
+       
+        // Seul un utilisateur authentifié peut voir les détails d'une Trade
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -48,6 +50,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(item);
         }
 
+        // Seul un utilisateur authentifié peut créer une Trade
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateTradeDto dto)
         {
@@ -75,7 +78,7 @@ namespace Dot.Net.WebApi.Controllers
                 SourceListId = dto.SourceListId,
                 Side = dto.Side,
 
-                //  audit serveur
+                // serveur
                 CreationName = username,
                 CreationDate = now,
                 RevisionName = username,
@@ -87,7 +90,7 @@ namespace Dot.Net.WebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = entity.TradeId }, entity);
         }
 
-
+        // Seul un utilisateur authentifié peut mettre à jour une Trade
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateTradeDto dto)
         {
@@ -129,6 +132,7 @@ namespace Dot.Net.WebApi.Controllers
             return NoContent();
         }
 
+        // Seul un utilisateur authentifié peut supprimer une Trade
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

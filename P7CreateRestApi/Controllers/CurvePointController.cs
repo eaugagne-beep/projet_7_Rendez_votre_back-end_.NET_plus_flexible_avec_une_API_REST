@@ -20,6 +20,7 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
+        // Seul un Admin peut voir la liste des entités
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -29,6 +30,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(await _repo.FindAll());
         }
 
+        // Seul un Admin peut voir les détails d'une entité
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -39,6 +41,7 @@ namespace Dot.Net.WebApi.Controllers
             return item == null ? NotFound() : Ok(item);
         }
 
+        // Seul un Admin peut créer une entité
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateCurvePointDto dto)
         {
@@ -60,6 +63,7 @@ namespace Dot.Net.WebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
+        // Seul un Admin peut mettre à jour une entité
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCurvePointDto dto)
         {
@@ -85,6 +89,7 @@ namespace Dot.Net.WebApi.Controllers
             return NoContent();
         }
 
+        // Seul un Admin peut supprimer une entité
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

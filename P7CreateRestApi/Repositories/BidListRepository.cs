@@ -6,6 +6,8 @@ namespace Dot.Net.WebApi.Repositories
 {
     public class BidListRepository
     {
+
+        // Injection du DbContext pour accéder à la base de données
         public LocalDbContext DbContext { get; }
 
         public BidListRepository(LocalDbContext dbContext)
@@ -13,22 +15,28 @@ namespace Dot.Net.WebApi.Repositories
             DbContext = dbContext;
         }
 
+
+        // Trouve toutes les entités
         public async Task<List<BidList>> FindAll()
         {
             return await DbContext.BidLists.ToListAsync();
         }
 
+        // Trouve une entité par son ID, retourne null si elle n'existe pas
         public async Task<BidList?> FindById(int id)
         {
             return await DbContext.BidLists.FirstOrDefaultAsync(b => b.BidListId == id);
         }
 
+
+        // Ajoute une nouvelle entité à la base de données
         public async Task Add(BidList bidList)
         {
             DbContext.BidLists.Add(bidList);
             await DbContext.SaveChangesAsync();
         }
 
+        // Met à jour une entité existante avec les valeurs de l'input, retourne false si l'entité n'existe pas
         public async Task<bool> Update(int id, BidList input)
         {
             var existing = await DbContext.BidLists.FindAsync(id);
@@ -60,7 +68,7 @@ namespace Dot.Net.WebApi.Repositories
         }
 
 
-
+        // Supprime une entité de la base de données
         public async Task Delete(BidList bidList)
         {
             DbContext.BidLists.Remove(bidList);

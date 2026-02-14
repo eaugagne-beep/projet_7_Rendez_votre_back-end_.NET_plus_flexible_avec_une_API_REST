@@ -16,6 +16,7 @@ namespace Dot.Net.WebApi.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _config;
 
+        // Injection de UserManager, RoleManager et IConfiguration pour gérer les utilisateurs, les rôles et la configuration JWT
         public AuthController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IConfiguration config)
         {
             _userManager = userManager;
@@ -26,6 +27,7 @@ namespace Dot.Net.WebApi.Controllers
         public record RegisterDto(string UserName, string Password, string? FullName, string Role);
         public record LoginDto(string UserName, string Password);
 
+        // Seul un Admin peut créer un nouvel utilisateur
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -45,6 +47,8 @@ namespace Dot.Net.WebApi.Controllers
 
             return Ok(new { message = "User created", user.Id, user.UserName, user.FullName, role = dto.Role });
         }
+
+        // Tout le monde peut se connecter
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)

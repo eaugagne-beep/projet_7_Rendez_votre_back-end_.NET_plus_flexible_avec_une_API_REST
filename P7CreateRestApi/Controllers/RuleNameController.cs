@@ -14,12 +14,15 @@ namespace Dot.Net.WebApi.Controllers
         private readonly RuleNameRepository _repo;
         private readonly ILogger<RuleNameController> _logger;
 
+
+        // Injection du repository et du logger via le constructeur
         public RuleNameController(RuleNameRepository repo, ILogger<RuleNameController> logger)
         {
             _repo = repo;
             _logger = logger;
         }
 
+        // Seul un Admin peut voir la liste de toutes les RuleNames
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -32,6 +35,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(items);
         }
 
+        // Seul un Admin peut voir les détails d'une RuleName
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -48,6 +52,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(item);
         }
 
+        // Seul un Admin peut créer une RuleName
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRuleNameDto dto)
         {
@@ -70,6 +75,7 @@ namespace Dot.Net.WebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
+        // Seul un Admin peut mettre à jour une RuleName
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateRuleNameDto dto)
         {
@@ -96,6 +102,7 @@ namespace Dot.Net.WebApi.Controllers
             return NoContent();
         }
 
+        // Seul un Admin peut supprimer une RuleName
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

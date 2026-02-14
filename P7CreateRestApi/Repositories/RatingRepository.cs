@@ -6,6 +6,7 @@ namespace Dot.Net.WebApi.Repositories
 {
     public class RatingRepository
     {
+        // Injection du DbContext pour accéder à la base de données
         public LocalDbContext DbContext { get; }
 
         public RatingRepository(LocalDbContext dbContext)
@@ -13,22 +14,26 @@ namespace Dot.Net.WebApi.Repositories
             DbContext = dbContext;
         }
 
+        // Trouve toutes les entités
         public async Task<List<Rating>> FindAll()
         {
             return await DbContext.Ratings.ToListAsync();
         }
 
+        // Trouve une entité par son ID
         public async Task<Rating?> FindById(int id)
         {
             return await DbContext.Ratings.FirstOrDefaultAsync(r => r.Id == id);
         }
 
+        // Ajoute une nouvelle entité
         public async Task Add(Rating rating)
         {
             DbContext.Ratings.Add(rating);
             await DbContext.SaveChangesAsync();
         }
 
+        // Met à jour une entité existante
         public async Task<bool> Update(int id, Rating input)
         {
             var existing = await DbContext.Ratings.FindAsync(id);
@@ -43,7 +48,7 @@ namespace Dot.Net.WebApi.Repositories
             return true;
         }
 
-
+        // Supprime une entité
         public async Task Delete(Rating rating)
         {
             DbContext.Ratings.Remove(rating);

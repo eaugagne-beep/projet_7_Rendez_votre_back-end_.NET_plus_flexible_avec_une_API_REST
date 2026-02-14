@@ -11,9 +11,11 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// Configurer Swagger avec la prise en charge de JWT
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -49,11 +51,11 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-
+// Configurer Entity Framework Core avec SQL Server
 builder.Services.AddDbContext<LocalDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
+// Configurer Identity
 builder.Services
     .AddIdentityCore<User>()
     .AddRoles<IdentityRole>()
@@ -61,7 +63,7 @@ builder.Services
     .AddDefaultTokenProviders();
 
 
-
+// Configurer l'authentification JWT
 builder.Services
     .AddAuthentication(options =>
     {
@@ -88,7 +90,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-
+// Les repositories
 builder.Services.AddScoped<BidListRepository>();
 builder.Services.AddScoped<CurvePointRepository>();
 builder.Services.AddScoped<RatingRepository>();
@@ -103,6 +105,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+// Middleware de logging pour chaque requête
 app.Use(async (context, next) =>
 {
     var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()

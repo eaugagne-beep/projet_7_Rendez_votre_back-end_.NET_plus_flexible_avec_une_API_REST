@@ -6,6 +6,7 @@ namespace Dot.Net.WebApi.Repositories
 {
     public class CurvePointRepository
     {
+        // Injection du DbContext pour accéder à la base de données
         public LocalDbContext DbContext { get; }
 
         public CurvePointRepository(LocalDbContext dbContext)
@@ -13,16 +14,19 @@ namespace Dot.Net.WebApi.Repositories
             DbContext = dbContext;
         }
 
+        // Trouve toutes les entités
         public async Task<List<CurvePoint>> FindAll()
         {
             return await DbContext.CurvePoints.ToListAsync();
         }
 
+        // Trouve une entité par son Id
         public async Task<CurvePoint?> FindById(int id)
         {
             return await DbContext.CurvePoints.FirstOrDefaultAsync(c => c.Id == id);
         }
 
+        // Ajoute une nouvelle entité
         public async Task Add(CurvePoint curvePoint)
         {
             DbContext.CurvePoints.Add(curvePoint);
@@ -30,6 +34,7 @@ namespace Dot.Net.WebApi.Repositories
         }
 
 
+        // Met à jour une entité existante
         public async Task<bool> Update(int id, CurvePoint input)
         {
             var existing = await DbContext.CurvePoints.FindAsync(id);
@@ -46,6 +51,7 @@ namespace Dot.Net.WebApi.Repositories
             return true;
         }
 
+        // Supprime une entité
         public async Task Delete(CurvePoint curvePoint)
         {
             DbContext.CurvePoints.Remove(curvePoint);

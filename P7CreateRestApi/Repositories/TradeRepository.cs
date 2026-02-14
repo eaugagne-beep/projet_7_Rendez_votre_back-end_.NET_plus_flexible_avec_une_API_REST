@@ -6,6 +6,7 @@ namespace Dot.Net.WebApi.Repositories
 {
     public class TradeRepository
     {
+        // Injection du DbContext pour accéder à la base de données
         public LocalDbContext DbContext { get; }
 
         public TradeRepository(LocalDbContext dbContext)
@@ -13,22 +14,26 @@ namespace Dot.Net.WebApi.Repositories
             DbContext = dbContext;
         }
 
+        // Trouve toutes les entités
         public async Task<List<Trade>> FindAll()
         {
             return await DbContext.Trades.ToListAsync();
         }
 
+        // Trouve une entité par son ID, retourne null si elle n'existe pas
         public async Task<Trade?> FindById(int id)
         {
             return await DbContext.Trades.FirstOrDefaultAsync(t => t.TradeId == id);
         }
 
+        // Ajoute une nouvelle entité à la base de données
         public async Task Add(Trade trade)
         {
             DbContext.Trades.Add(trade);
             await DbContext.SaveChangesAsync();
         }
 
+        // Met à jour une entité existante, retourne false si l'entité n'existe pas
         public async Task<bool> Update(int id, Trade input)
         {
             var existing = await DbContext.Trades.FindAsync(id);
@@ -57,7 +62,7 @@ namespace Dot.Net.WebApi.Repositories
             return true;
         }
 
-
+        // Supprime une entité de la base de données
         public async Task Delete(Trade trade)
         {
             DbContext.Trades.Remove(trade);

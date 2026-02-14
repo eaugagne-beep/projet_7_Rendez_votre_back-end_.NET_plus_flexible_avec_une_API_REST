@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dot.Net.WebApi.Controllers
 {
+    
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -25,8 +26,6 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
-        // ADMIN endpoints
-        
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -41,6 +40,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(users);
         }
 
+        // Seul un Admin peut voir les détails d'un utilisateur
         [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
@@ -61,8 +61,8 @@ namespace Dot.Net.WebApi.Controllers
             });
         }
 
-        
 
+        // Seul un Admin peut mettre à jour un utilisateur
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateUserDto dto)
@@ -95,6 +95,7 @@ namespace Dot.Net.WebApi.Controllers
             return NoContent();
         }
 
+        // Seul un Admin peut supprimer un utilisateur
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)

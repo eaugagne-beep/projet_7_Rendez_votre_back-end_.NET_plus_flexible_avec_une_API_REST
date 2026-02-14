@@ -20,6 +20,7 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
+        // Seul un utilisateur authentifié peut voir la liste des Trades
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -32,6 +33,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(items);
         }
 
+        // Seul un utilisateur authentifié peut voir les détails d'un Trade
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -48,6 +50,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(item);
         }
 
+        // Seul un utilisateur authentifié peut créer un nouveau Trade
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRatingDto dto)
         {
@@ -68,13 +71,14 @@ namespace Dot.Net.WebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
+        // Seul un utilisateur authentifié peut mettre à jour un Trade existant
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateRatingDto dto)
         {
             _logger.LogInformation("PUT /api/Rating/{Id} called by {User}",
                 id, User.Identity?.Name ?? "anonymous");
 
-            // Si ton repository a Update(id, Rating input) (comme CurvePoint), on l’utilise.
+            
             var ok = await _repo.Update(id, new Rating
             {
                 MoodysRating = dto.MoodysRating,
@@ -93,6 +97,7 @@ namespace Dot.Net.WebApi.Controllers
             return NoContent();
         }
 
+        // Seul un utilisateur authentifié peut supprimer un Trade
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

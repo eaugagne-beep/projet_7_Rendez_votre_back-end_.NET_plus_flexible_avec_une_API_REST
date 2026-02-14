@@ -20,6 +20,7 @@ namespace Dot.Net.WebApi.Controllers
             _logger = logger;
         }
 
+        // GET all, retourne une liste (vide si aucune entité)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -32,6 +33,7 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(items);
         }
 
+        // GET par ID, retourne 404 si l'entité n'existe pas
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -48,10 +50,11 @@ namespace Dot.Net.WebApi.Controllers
             return Ok(item);
         }
 
+        // POST, retourne 201 + Location + entité créée
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateBidListDto dto)
         {
-            // [ApiController] => 400 automatique si dto invalide (ModelState)
+            
             _logger.LogInformation("POST /api/BidList called by {User} | Account={Account} BidType={BidType}",
                 User.Identity?.Name ?? "anonymous",
                 dto.Account,
@@ -82,11 +85,11 @@ namespace Dot.Net.WebApi.Controllers
                 SourceListId = dto.SourceListId,
                 Side = dto.Side,
 
-                //  audit serveur (création)
+                
                 CreationName = username,
                 CreationDate = now,
 
-                //  audit serveur (révision initiale = création)
+                
                 RevisionName = username,
                 RevisionDate = now
             };
@@ -99,6 +102,7 @@ namespace Dot.Net.WebApi.Controllers
             return CreatedAtAction(nameof(GetById), new { id = entity.BidListId }, entity);
         }
 
+        // PUT, retourne 204 ou 404 si l'entité n'existe pas
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBidListDto dto)
         {
@@ -125,7 +129,7 @@ namespace Dot.Net.WebApi.Controllers
                 SourceListId = dto.SourceListId,
                 Side = dto.Side,
 
-                // serveur
+                
                 RevisionName = User.Identity?.Name ?? "system",
                 RevisionDate = DateTime.UtcNow
 
@@ -141,6 +145,7 @@ namespace Dot.Net.WebApi.Controllers
             return NoContent();
         }
 
+        // DELETE, retourne 204 ou 404 si l'entité n'existe pas
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
