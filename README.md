@@ -47,6 +47,6 @@ Concevoir une API RESTful complète respectant les bonnes pratiques :
 
 ##  Sécurité
 
-- Endpoints protégés avec `[Authorize]`
-- Gestion des rôles (`Admin`)
+- Endpoints protégés avec [Authorize]
+- Gestion des rôles (Admin)
 - Validation des entrées utilisateur
