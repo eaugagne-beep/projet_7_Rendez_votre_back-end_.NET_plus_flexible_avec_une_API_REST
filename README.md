@@ -1,39 +1,52 @@
-# DotNetEnglishP7
-Student repo for Project 7 of the Back-end developer: .NET path
 
-The project requires the creation of a database using the Entity Framework Code-First approach. 
+#  P7CreateRestApi
 
-Create the entities as outlined in the PDF linked in the Project 7 Course details. Then use Entity Framework's Code-First approach to create the database and all tables required. 
+API REST sécurisée développée en **ASP.NET Core** avec authentification JWT, gestion des utilisateurs via Identity et tests unitaires.
 
-In order for the database to be correctly created, you must meet the prerequisites below and change the connection strings to point to the MSSQL Server running on you your local PC.
+---
 
-**Prerequisites**: MSSQL Developer 2019 or Express 2019 has been installed along with Microsoft SQL Server Management Studio (SSMS).
+##  Objectif
 
-MSSQL: https://www.microsoft.com/en-us/sql-server/sql-server-downloads
+Concevoir une API RESTful complète respectant les bonnes pratiques :
 
-SSMS: https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16
+- CRUD sur plusieurs entités
+- Authentification sécurisée (JWT)
+- Autorisation par rôles
+- Validation des données
+- Logs applicatifs
+- Tests unitaires
 
-*Note: earlier versions of MSSQL Server should work fine, but have not been tested.
+---
 
-*In the P7CreateRestApi project, open the appsettings.json file.*
+##  Stack technique
 
-You will see the ConnectionStrings section which defines the connection strings for the database used in this application.
+- **C# / .NET 7**
+- **ASP.NET Core Web API**
+- **Entity Framework Core**
+- **SQL Server (LocalDB)**
+- **ASP.NET Identity**
+- **JWT Authentication**
+- **xUnit (tests)**
 
-      "ConnectionStrings":
-      {
-        "DefaultConnection": "Server=.;Database=YOUR DATABASE NAME;Trusted_Connection=True;MultipleActiveResultSets=true"
-      }
+---
 
-There are different versions of MSSQL (please use MSSQL for this project and not another database) and when setting up the database server, there are different options that will change the configuration, so the connection strings defined may not work.
+##  Fonctionnalités
 
-The connection strings defined in the project are setup for MSSQL Server Standard 2019. The installation has not created an instance name, so the server is just referred to as "." which means the default instance of MSSQL server running on the current machine. The built in Windows user which should be setup in MSSQL server by default during installation.
+-  Authentification JWT
+-  Gestion des utilisateurs (Identity)
+-  CRUD complet :
+  - BidList
+  - CurvePoint
+  - Rating
+  - RuleName
+  - Trade
+-  Logs sur tous les endpoints
+-  Tests unitaires sur les repositories
 
-If you have installed MSSQL Express, the value to use for Server is most likely .\SQLEXPRESS, so for example, your database  connection string would be: -
+---
 
-    "DefaultConnection": "Server=.\SQLEXPRESS;Database=YOUR DATABASE NAME;Trusted_Connection=True;MultipleActiveResultSets=true"
+##  Sécurité
 
-
-You will need to implement **JWT Authentication** and **Authorization** using **Microsoft Identity**. 
-
-If you have trouble connecting, first try to connection using Microsoft SQL Server Management Studio (make sure authentication type  is "Windows Authentication"), or refer to https://sqlserver-help.com/2011/06/19/help-whats-my-sql-server-name/.
-If you still have trouble, please ask your mentor for assistance.
+- Endpoints protégés avec `[Authorize]`
+- Gestion des rôles (`Admin`)
+- Validation des entrées utilisateur
